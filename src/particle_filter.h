@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <cmath>
 #include "helper_functions.h"
 
 struct Particle {
@@ -60,12 +61,14 @@ class ParticleFilter {
   /**
    * dataAssociation Finds which observations correspond to which landmarks 
    *   (likely by using a nearest-neighbors data association).
+   * @param particle
    * @param predicted Vector of predicted landmark observations
    * @param observations Vector of landmark observations
    */
-  void dataAssociation(std::vector<LandmarkObs> predicted, 
-                       std::vector<LandmarkObs>& observations);
-  
+  void dataAssociation(Particle& particle,
+                       const std::vector<LandmarkObs>& predicted,
+                       const std::vector<LandmarkObs>& observations);
+
   /**
    * updateWeights Updates the weights for each particle based on the likelihood
    *   of the observed measurements. 
@@ -91,7 +94,8 @@ class ParticleFilter {
    * This can be a very useful debugging tool to make sure transformations 
    *   are correct and assocations correctly connected
    */
-  void SetAssociations(Particle& particle, const std::vector<int>& associations,
+  void SetAssociations(Particle& particle,
+                       const std::vector<int>& associations,
                        const std::vector<double>& sense_x, 
                        const std::vector<double>& sense_y);
 
@@ -101,6 +105,36 @@ class ParticleFilter {
   const bool initialized() const {
     return is_initialized;
   }
+
+  /**
+   * calculate multi-variable Gaussina distibution
+   * @param sensor_range Range [m] of sensor
+   * @param std_landmark[] Array of dimension 2
+   *   [Landmark measurement uncertainty [x [m], y [m]]]
+   * @return vector of close Landmarks
+   */
+  std::vector<LandmarkObs> findCloseLandMarks(const Particle& particle,
+                                              const Map& map_landmarks,
+                                              double sensor_range) const;
+
+  /**
+   * calcWeights Calculate the weight for a particle
+   * @param particle
+   * @param map Map class containing map landmarks
+   */
+  void calcWeights(const Map &map_landmarks,
+                   const double std_landmark[]);
+
+  /**
+   * calculate multi-variable Gaussina distibution
+   @param xl x location of landmark
+   @param xl y location of landmark
+   @param xl x location of observation
+   @param xl y location of observation
+   @param std_landmark[] Array of dimension 2
+   @return distrubution density
+   */
+  double density(double xl, double yl, double xo, double yo, const double std_landmark[]) const;
 
   /**
    * Used for obtaining debugging information related to particles.
